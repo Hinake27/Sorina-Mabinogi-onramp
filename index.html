@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>新瑪奇小工具入口</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f7f9;
+      color: #333;
+    }
+    .container {
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .sidebar {
+      width: 280px;
+      background: #2c3e50;
+      color: white;
+      padding: 20px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+    }
+    .sidebar h2 {
+      margin: 0 0 20px 0;
+      font-size: 22px;
+      text-align: center;
+      font-weight: bold;
+      letter-spacing: 1.5px;
+    }
+    .category {
+      margin-top: 30px;
+      margin-bottom: 10px;
+      font-weight: 700;
+      font-size: 16px;
+      border-bottom: 2px solid #1abc9c;
+      padding-bottom: 6px;
+      letter-spacing: 0.8px;
+    }
+    .menu button {
+      width: 100%;
+      margin: 8px 0;
+      padding: 12px 15px;
+      border: none;
+      background: #34495e;
+      color: white;
+      text-align: left;
+      cursor: pointer;
+      font-size: 15px;
+      border-radius: 6px;
+      transition: background 0.3s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .menu button:hover {
+      background: #1abc9c;
+      box-shadow: 0 4px 8px rgba(26,188,156,0.6);
+    }
+    .content {
+      flex: 1;
+      background: white;
+      box-shadow: inset 0 0 8px rgba(0,0,0,0.05);
+    }
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    /* 行動裝置支援 */
+    @media (max-width: 600px) {
+      .container {
+        flex-direction: column;
+        height: 100vh;
+      }
+      .sidebar {
+        width: 100%;
+        height: auto;
+        max-height: 240px;
+        overflow-y: auto;
+        padding: 15px 10px;
+      }
+      .content {
+        flex: 1;
+        height: calc(100vh - 240px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="sidebar">
+      <h2>工具選單</h2>
+
+      <div class="category">生活輔助</div>
+      <div class="menu">
+        <button onclick="loadPage('https://hinake27.github.io/Mabinogi-Trading-Post-Lookup-Tool/')">
+          1-1 貿易查詢表
+        </button>
+        <button onclick="loadPage('https://hinake27.github.io/Mabinogi_Food2/')">
+          1-2 食物濃度標示
+        </button>
+        <button onclick="loadPage('https://hinake27.github.io/Mabinogi-TW-Enchant-Energy/')">
+          1-3 聚能材料查詢
+        </button>
+      </div>
+
+      <div class="category">計算器</div>
+      <div class="menu">
+        <button onclick="loadPage('https://hinake27.github.io/New-Mabinogi-TW2CN/')">
+          2-1 銀行手續費計算 (中文單位)
+        </button>
+        <button onclick="loadPage('https://hinake27.github.io/New-Mabinogi-TW/')">
+          2-2 銀行手續費計算 (原始)
+        </button>
+      </div>
+
+      <div class="category">副本與任務</div>
+      <div class="menu">
+        <button onclick="loadPage('https://hinake27.github.io/New-Mabinogi-TW-Alby_Hardmode_Higher_Evil_Pass/')">
+          3-1 艾菲通行證計算
+        </button>
+        <button onclick="loadPage('https://hinake27.github.io/Mabinogi-Alby_Hardmode_Higher_Evil_Pass-CN/')">
+          3-2 艾菲通行證計算 (中文)
+        </button>
+        <button onclick="loadPage('https://hinake27.github.io/mabinogi-tw-Scratchpaper/')">
+          3-3 喀輪巴斯貓本紙條
+        </button>
+      </div>
+    </div>
+    <div class="content">
+      <iframe id="contentFrame" src="https://hinake27.github.io/Mabinogi-Trading-Post-Lookup-Tool/"></iframe>
+    </div>
+  </div>
+
+  <script>
+    function loadPage(url) {
+      document.getElementById('contentFrame').src = url;
+    }
+  </script>
+</body>
+</html>
