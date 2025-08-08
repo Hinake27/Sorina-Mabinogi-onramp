@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>新瑪奇小工具入口 — 秋楓簡約版</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg-1:#F7F2EA; --bg-2:#F1E5D7; --ink:#2B2320; --card:#FFFFFF;
+      --amber:#D97706; --rust:#B45309; --leaf-1:#D97706; --leaf-2:#B45309; --leaf-3:#A16207;
+      --soft-border: rgba(43,35,32,.08);
+      --shadow-sm: 0 6px 18px rgba(43,35,32,.10);
+      --shadow-md: 0 12px 30px rgba(43,35,32,.12);
+      --radius-xl: 18px; --radius-2xl: 26px;
+      --transition: 200ms cubic-bezier(.22,.61,.36,1);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      color:var(--ink);
+      background:
+        radial-gradient(1200px 600px at 10% -10%, rgba(217,119,6,.12), transparent 60%),
+        radial-gradient(1000px 500px at 110% 0%, rgba(180,83,9,.10), transparent 55%),
+        linear-gradient(180deg, var(--bg-1), var(--bg-2));
+      overflow:hidden;
+    }
+    .wrap{ display:grid; grid-template-columns: 320px 1fr; gap:22px; height:100%; padding:22px; }
+    .sidebar{
+      position:relative; border:1px solid var(--soft-border); background: var(--card);
+      border-radius: var(--radius-2xl); box-shadow: var(--shadow-sm); padding:20px;
+      display:flex; flex-direction:column; overflow:hidden; isolation:isolate;
+    }
+    .brand{ display:flex; align-items:center; gap:12px; padding:6px 10px 16px 10px; }
+    .logo{
+      width:34px;height:34px;border-radius:10px;
+      background: radial-gradient(circle at 30% 30%, #FDE68A, #F59E0B 60%, #B45309 100%);
+      box-shadow: inset 0 2px 8px rgba(255,255,255,.5), 0 4px 12px rgba(180,83,9,.25);
+    }
+    .title{ font-weight:800; letter-spacing:.4px; }
+    .conn{
+      margin-left:auto; margin-right:8px;
+      font-size:12px; opacity:.7; padding:2px 6px; border-radius:8px;
+      background: rgba(0,0,0,.06);
+      border: 1px solid rgba(0,0,0,.08);
+    }
+    .conn.ok{ background: rgba(16,185,129,.10); border-color: rgba(16,185,129,.25); }
+    .conn.down{ background: rgba(244,63,94,.10); border-color: rgba(244,63,94,.25); }
+    .online{
+      margin-left:auto;
+      padding:4px 10px;
+      border-radius:999px;
+      font-size:12px; font-weight:800;
+      background: color-mix(in oklab, var(--rust), white 75%);
+      border: 1px solid color-mix(in oklab, var(--rust), black 8%);
+      box-shadow: 0 4px 10px rgba(180,83,9,.18);
+      display:flex; align-items:center; gap:6px;
+    }
+    .online::before{
+      content:"";
+      width:8px; height:8px; border-radius:999px;
+      background:#22c55e;
+      box-shadow: 0 0 0 0 rgba(34,197,94,.6);
+      animation: ping 2s infinite;
+    }
+    @keyframes ping {
+      0%{ box-shadow: 0 0 0 0 rgba(34,197,94,.6) }
+      70%{ box-shadow: 0 0 0 8px rgba(34,197,94,0) }
+      100%{ box-shadow: 0 0 0 0 rgba(34,197,94,0) }
+    }
+    .category{ margin:14px 8px 8px; font-size:12px; letter-spacing:.8px; font-weight:700; text-transform:uppercase; opacity:.7; }
+    .menu{ padding:6px }
+    .btn{
+      width:100%; appearance:none; border:1px solid var(--soft-border);
+      background: linear-gradient(180deg, #fff, #FAF6F0); color:var(--ink);
+      border-radius: 14px; padding:12px 46px 12px 14px;
+      text-align:left; font-size:15px; font-weight:600; letter-spacing:.2px;
+      margin:8px 0; cursor:pointer; position:relative;
+      transition: transform var(--transition), box-shadow var(--transition), background var(--transition);
+      box-shadow: 0 1px 0 rgba(43,35,32,.04); overflow:hidden;
+    }
+    .btn:hover{ transform: translateY(-2px); box-shadow: var(--shadow-md); background: linear-gradient(180deg, #fff, #FFF9F2); }
+    .btn[disabled]{
+      opacity:.6; cursor:not-allowed; transform:none !important;
+      filter:saturate(.85);
+      box-shadow: 0 1px 0 rgba(43,35,32,.04) !important;
+    }
+    .btn:active{ transform:translateY(0) }
+    .btn::after{
+      content:""; position:absolute; inset:0;
+      background: linear-gradient(120deg, transparent 0%, rgba(217,119,6,.06) 25%, transparent 60%);
+      transform: translateX(-120%); transition: transform 700ms ease; pointer-events:none;
+    }
+    .btn:hover::after{ transform: translateX(0%) }
+    .active{ outline:2px solid color-mix(in oklab, var(--amber), white 60%); background: linear-gradient(180deg, #FFFDF8, #FFF4E6); }
+    /* 點擊計數徽章 */
+    .badge{
+      position:absolute; right:10px; top:50%; transform: translateY(-50%);
+      padding:2px 8px; border-radius:999px; font-size:12px; font-weight:700;
+      background: color-mix(in oklab, var(--amber), white 72%);
+      border: 1px solid color-mix(in oklab, var(--amber), black 6%);
+      box-shadow: 0 4px 8px rgba(180,83,9,.18);
+      min-width: 34px; text-align:center;
+    }
+    .content{ position:relative; border:1px solid var(--soft-border); border-radius: var(--radius-2xl); background: #fff; box-shadow: var(--shadow-md); overflow:hidden; }
+    .iframe-wrap{ height:100%; opacity:0; transform: translateY(6px); transition: opacity 380ms ease, transform 380ms ease; }
+    .iframe-wrap.loaded{ opacity:1; transform:none; }
+    iframe{ width:100%; height:100%; border:0 }
+    .leaves{ position:absolute; inset:0; pointer-events:none; z-index:-1; overflow:hidden; }
+    .leaf{ position:absolute; width:18px; height:18px; opacity:.12; filter: blur(.2px); animation: fall linear infinite; }
+    @keyframes fall{ 0%{ transform: translateY(-10%) rotate(0deg) } 100%{ transform: translateY(110vh) rotate(360deg) } }
+    @media (max-width: 780px){ .wrap{ grid-template-columns: 1fr; gap:14px; padding:14px; } }
+    @media (prefers-reduced-motion: reduce) { .btn, .iframe-wrap{ transition: none !important } .leaf{ animation: none !important; display:none } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div class="title">工具選單</div><div id="connStatus" class="conn">檢查中…</div><div class="online" id="onlineBadge" title="目前在線人數">—</div>
+      </div>
+
+      <div class="category">生活輔助</div>
+      <div class="menu">
+        <button class="btn active" data-url="https://hinake27.github.io/Mabinogi-Trading-Post-Lookup-Tool/" data-key="tp-lookup"><span>1-1 貿易查詢表</span><span class="badge" data-count-for="tp-lookup">—</span></button>
+        <button class="btn" data-url="https://hinake27.github.io/Mabinogi_Food2/" data-key="food2"><span>1-2 食物濃度標示</span><span class="badge" data-count-for="food2">—</span></button>
+        <button class="btn" data-url="https://hinake27.github.io/Mabinogi-TW-Enchant-Energy/" data-key="enchant-energy"><span>1-3 聚能材料查詢</span><span class="badge" data-count-for="enchant-energy">—</span></button>
+      </div>
+
+      <div class="category">計算器</div>
+      <div class="menu">
+        <button class="btn" data-url="https://hinake27.github.io/New-Mabinogi-TW2CN/" data-key="bank-cn"><span>2-1 銀行手續費計算 (中文單位)</span><span class="badge" data-count-for="bank-cn">—</span></button>
+        <button class="btn" data-url="https://hinake27.github.io/New-Mabinogi-TW/" data-key="bank-raw"><span>2-2 銀行手續費計算 (原始)</span><span class="badge" data-count-for="bank-raw">—</span></button>
+      </div>
+
+      <div class="category">副本與任務</div>
+      <div class="menu">
+        <button class="btn" data-url="https://hinake27.github.io/New-Mabinogi-TW-Alby_Hardmode_Higher_Evil_Pass/" data-key="alby-tw"><span>3-1 艾菲通行證計算</span><span class="badge" data-count-for="alby-tw">—</span></button>
+        <button class="btn" data-url="https://hinake27.github.io/Mabinogi-Alby_Hardmode_Higher_Evil_Pass-CN/" data-key="alby-cn"><span>3-2 艾菲通行證計算 (中文)</span><span class="badge" data-count-for="alby-cn">—</span></button>
+        <button class="btn" data-url="https://hinake27.github.io/mabinogi-tw-Scratchpaper/" data-key="scratchpaper"><span>3-3 喀輪巴斯貓本紙條</span><span class="badge" data-count-for="scratchpaper">—</span></button>
+      </div>
+
+      <div class="leaves" id="leaves-sidebar" aria-hidden="true"></div>
+    </aside>
+
+    <main class="content">
+      <div class="iframe-wrap loaded" id="frameWrap">
+        <iframe id="contentFrame"
+          src="https://hinake27.github.io/Mabinogi-Trading-Post-Lookup-Tool/"
+          title="內容"></iframe>
+      </div>
+      <div class="leaves" id="leaves-content" aria-hidden="true"></div>
+    </main>
+  </div>
+
+  <script>
+    // --- 導覽與過場 ---
+    const frame = document.getElementById('contentFrame');
+    const frameWrap = document.getElementById('frameWrap');
+    const buttons = document.querySelectorAll('.btn');
+
+    function setActive(btn){
+      buttons.forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+    const COOLDOWN_MS = 10000; // 每個入口 10 秒冷卻，避免滑鼠連點
+    buttons.forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const url = btn.getAttribute('data-url');
+        const key = btn.getAttribute('data-key');
+        if(!url) return;
+        // 暫時禁用按鈕，擋掉極短時間的連點
+        btn.setAttribute('disabled','true');
+        setTimeout(()=>btn.removeAttribute('disabled'), 700);
+
+        frameWrap.classList.remove('loaded');
+        setActive(btn);
+        // 先切畫面
+        frame.src = url;
+        // 再累加計數（有冷卻判斷）
+        incrementCount(key);
+      });
+    });
+
+    frame.addEventListener('load', ()=>{
+      requestAnimationFrame(()=>frameWrap.classList.add('loaded'));
+    });
+
+    // --- CountAPI 點擊計數（含 fallback 與 localStorage 退路） ---
+    const NAMESPACE = 'hinake27-mabi-tools';
+    const ENDPOINTS = ['https://api.countapi.xyz', 'https://api.countapi.store']; // 嘗試兩個網域
+    const storageKey = (k)=>`countapi_local_${NAMESPACE}_${k}`;
+
+    async function apiFetch(path, opts){
+      for (const base of ENDPOINTS){
+        try{
+          const r = await fetch(base + path, opts);
+          if(r.ok){
+            return await r.json();
+          }
+        }catch(e){
+          // 繼續嘗試下一個 endpoint
+        }
+      }
+      throw new Error('All endpoints failed');
+    }
+
+    async function ensureKey(key){
+      try{
+        // 取目前值，若沒有就 create 0
+        const res = await apiFetch(`/get/${NAMESPACE}/${key}`);
+        return res && typeof res.value === 'number' ? res.value : 0;
+      }catch(e){
+        // 嘗試建立
+        try{
+          const create = await apiFetch(`/create?namespace=${encodeURIComponent(NAMESPACE)}&key=${encodeURIComponent(key)}&value=0`);
+          return create.value ?? 0;
+        }catch(_){
+          // fallback: localStorage
+          const lv = Number(localStorage.getItem(storageKey(key)) || 0);
+          return lv;
+        }
+      }
+    }
+
+    async function renderCounts(){
+      const badges = document.querySelectorAll('[data-count-for]');
+      for(const b of badges){
+        const key = b.getAttribute('data-count-for');
+        const val = await ensureKey(key);
+        b.textContent = formatCount(val);
+      }
+    }
+
+    function formatCount(n){
+      // 1.2k 之類的縮寫
+      if(n >= 1000){
+        return (Math.round(n/100)/10).toFixed(1).replace('.0','') + 'k';
+      }
+      return String(n);
+    }
+
+    async function incrementCount(key){
+      // 冷卻判斷：同一使用者對同一入口，10 秒內只記一次
+      const lastKey = storageKey(key) + "_last";
+      const now = Date.now();
+      const last = Number(localStorage.getItem(lastKey) || 0);
+      if (now - last < COOLDOWN_MS){
+        // 冷卻中：不打 API，不更新 UI
+        return;
+      }
+      localStorage.setItem(lastKey, String(now));
+      // 先樂觀更新 UI
+      const badge = document.querySelector(`.badge[data-count-for="${CSS.escape(key)}"]`);
+      if(badge){
+        const current = badge.textContent === '—' ? 0 : (badge.textContent.endsWith('k') ? Number(badge.textContent.replace('k',''))*1000 : Number(badge.textContent));
+        badge.textContent = formatCount(current + 1);
+      }
+
+      try{
+        const res = await apiFetch(`/hit/${NAMESPACE}/${key}`);
+        if(res && typeof res.value === 'number' && badge){
+          badge.textContent = formatCount(res.value);
+        }
+      }catch(e){
+        // API 掛掉時，至少在本地加一
+        const localKey = storageKey(key);
+        const v = Number(localStorage.getItem(localKey) || 0) + 1;
+        localStorage.setItem(localKey, String(v));
+      }
+    }
+
+    renderCounts();
+
+    // --- 楓葉動畫（輕量） ---
+    const leafSVG = encodeURIComponent(`
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <path d="M12 1c.8 2.9-1.5 5.1-3.8 6.1 2.9.3 5.9 1.9 6.8 5.4-1.4-2-3.6-2.6-6-2.1 2.1 1.4 3 3.7 2.4 6.6-.7-2-2.3-3.1-4.5-3.4 1.9 1.9 2.3 4.2.9 7.4-.8-2.8-2.9-4.5-6.1-5.1 3.2-1.1 4.7-3.4 4.5-6.8 1.2 1.9 2.9 2.6 5.1 2C9.4 8.9 8.5 7 9.2 4.6 10.1 3 11 1.9 12 1z" fill="currentColor"/>
+      </svg>
+    `);
+    function spawnLeaves(containerId, count){
+      const box = document.getElementById(containerId);
+      const maxW = box.clientWidth || 320;
+      const maxDelay = 6000;
+      for(let i=0; i<count; i++){
+        const el = document.createElement('span');
+        el.className = 'leaf';
+        const colors = ['var(--leaf-1)','var(--leaf-2)','var(--leaf-3)'];
+        el.style.color = colors[Math.floor(Math.random()*colors.length)];
+        const size = 12 + Math.random()*16;
+        el.style.width = size+'px';
+        el.style.height = size+'px';
+        el.style.left = Math.random()*maxW + 'px';
+        const dur = 8000 + Math.random()*9000;
+        const delay = Math.random()*maxDelay;
+        const drift = (Math.random()*40 - 20);
+        el.style.animationDuration = dur+'ms';
+        el.style.animationDelay = delay+'ms';
+        el.style.transform = `translateX(${drift}px)`;
+        el.style.backgroundImage = `url("data:image/svg+xml,${leafSVG}")`;
+        el.style.backgroundSize = 'contain';
+        el.style.backgroundRepeat = 'no-repeat';
+        box.appendChild(el);
+      }
+    }
+    spawnLeaves('leaves-sidebar', 12);
+    spawnLeaves('leaves-content', 18);
+
+    // --- 連線診斷 + 離線模式（CountAPI 被擋時） ---
+    const CONN = document.getElementById('connStatus');
+    let COUNTAPI_ONLINE = false;
+    async function testConnectivity(){
+      try{
+        // 嘗試取得 online key（最終會走到 create），若成功視為可用
+        await onlineEnsureKey();
+        COUNTAPI_ONLINE = true;
+        CONN.textContent = '連線：✅';
+        CONN.classList.remove('down'); CONN.classList.add('ok');
+      }catch(e){
+        COUNTAPI_ONLINE = false;
+        CONN.textContent = '連線：⛔';
+        CONN.classList.remove('ok'); CONN.classList.add('down');
+      }
+    }
+
+    // 離線估算（本機）：用於顯示不為 0 的大概值，僅此裝置有效
+    const LOCAL_PRESENCE_KEY = 'presence_local_tabs';
+    function localPresenceGet(){
+      return Math.max(1, Number(localStorage.getItem(LOCAL_PRESENCE_KEY) || 1)); // 至少 1
+    }
+    function localPresenceInc(){ localStorage.setItem(LOCAL_PRESENCE_KEY, String(localPresenceGet()+1)); }
+    function localPresenceDec(){ localStorage.setItem(LOCAL_PRESENCE_KEY, String(Math.max(0, localPresenceGet()-1))); }
+
+    function setOnlineBadgeOffline(){
+      ONLINE_BADGE.textContent = `${localPresenceGet()}(離線)`;
+    }
+
+    // sendBeacon 失敗時的 GET 圖片保底
+    function sendUpdateFallback(amount){
+      try{
+        const img = new Image();
+        // 使用第一個 endpoint 當保底
+        img.src = ENDPOINTS[0] + `/update/${ONLINE_NAMESPACE}/${ONLINE_KEY}?amount=${encodeURIComponent(amount)}&t=${Date.now()}`;
+      }catch(_){}
+    }
+
+
+    // --- 在線人數（CountAPI 近似方案） ---
+    const ONLINE_NAMESPACE = NAMESPACE; // 與點擊統一命名空間
+    const ONLINE_KEY = 'online';
+    const ONLINE_BADGE = document.getElementById('onlineBadge');
+    const TAB_ID = (()=>{
+      const id = localStorage.getItem('presence_tab_id') || (Math.random().toString(36).slice(2) + Date.now().toString(36));
+      localStorage.setItem('presence_tab_id', id);
+      return id;
+    })();
+    const JOIN_FLAG = `presence_joined_${TAB_ID}`;
+
+    async function onlineGet(){
+      try{
+        const res = await apiFetch(`/get/${ONLINE_NAMESPACE}/${ONLINE_KEY}`);
+        return (res && typeof res.value === 'number') ? res.value : 0;
+      }catch(e){
+        return 0;
+      }
+    }
+    async function onlineAdd(delta){
+      try{
+        // /update 支援 amount，可為負數；若不支援就退回 /hit（僅正數）
+        if(delta === 1){
+          const r = await apiFetch(`/hit/${ONLINE_NAMESPACE}/${ONLINE_KEY}`);
+          return r.value ?? null;
+        }else{
+          const r = await apiFetch(`/update/${ONLINE_NAMESPACE}/${ONLINE_KEY}?amount=${encodeURIComponent(delta)}`);
+          return r.value ?? null;
+        }
+      }catch(e){
+        // fallback：不處理遠端值
+        return null;
+      }
+    }
+    async function onlineEnsureKey(){
+      try{
+        const cur = await apiFetch(`/get/${ONLINE_NAMESPACE}/${ONLINE_KEY}`);
+        if(typeof cur.value === 'number') return cur.value;
+      }catch(_){}
+      try{
+        const created = await apiFetch(`/create?namespace=${encodeURIComponent(ONLINE_NAMESPACE)}&key=${encodeURIComponent(ONLINE_KEY)}&value=0`);
+        return created.value ?? 0;
+      }catch(_){
+        return 0;
+      }
+    }
+
+    function setOnlineBadge(n){
+      ONLINE_BADGE.textContent = String(Math.max(0, n));
+    }
+
+    async function onlineJoin(){
+      await testConnectivity();
+      if(!COUNTAPI_ONLINE){
+        // 本機離線模式：顯示估算，不打 API
+        if(!sessionStorage.getItem(JOIN_FLAG)){
+          localPresenceInc();
+          sessionStorage.setItem(JOIN_FLAG, '1');
+        }
+        setOnlineBadgeOffline();
+        return;
+      }
+      await onlineEnsureKey();
+      if(!sessionStorage.getItem(JOIN_FLAG)){
+        await onlineAdd(1);
+        sessionStorage.setItem(JOIN_FLAG, '1');
+      }
+      const n = await onlineGet();
+      setOnlineBadge(n);
+    }
+
+    async function onlineLeave(){
+      if(!COUNTAPI_ONLINE){
+        // 離線模式：本機-1
+        if(sessionStorage.getItem(JOIN_FLAG)){
+          localPresenceDec();
+          sessionStorage.removeItem(JOIN_FLAG);
+        }
+        return;
+      }
+      if(sessionStorage.getItem(JOIN_FLAG)){
+        await onlineAdd(-1);
+        sessionStorage.removeItem(JOIN_FLAG);
+      }
+    }
+
+    // 初次加入與輪詢
+    testConnectivity();
+    onlineJoin();
+    const ONLINE_POLL = setInterval(async ()=>{
+      if(COUNTAPI_ONLINE){
+        const n = await onlineGet();
+        setOnlineBadge(n);
+      }else{
+        setOnlineBadgeOffline();
+      }
+    }, 10000);
+
+    // 當分頁真正關閉或刷新時嘗試減一
+    window.addEventListener('beforeunload', ()=>{
+      if(!COUNTAPI_ONLINE){
+        // 離線模式本機 -1
+        sessionStorage.getItem(JOIN_FLAG) && localPresenceDec();
+      }
+      if(navigator.sendBeacon){ navigator.sendBeacon(ENDPOINTS[0] + `/update/${ONLINE_NAMESPACE}/${ONLINE_KEY}?amount=${encodeURIComponent(-1)}`);} else { sendUpdateFallback(-1); }
+      // 同時也清一次標記，避免刷新後未來不再 +1
+      sessionStorage.removeItem(JOIN_FLAG);
+    });
+
+  </script>
+</body>
+</html>
