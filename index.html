@@ -42,6 +42,14 @@
       box-shadow: inset 0 2px 8px rgba(255,255,255,.5), 0 4px 12px rgba(180,83,9,.25);
     }
     .title{ font-weight:800; letter-spacing:.4px; }
+    .conn{
+      margin-left:auto; margin-right:8px;
+      font-size:12px; opacity:.7; padding:2px 6px; border-radius:8px;
+      background: rgba(0,0,0,.06);
+      border: 1px solid rgba(0,0,0,.08);
+    }
+    .conn.ok{ background: rgba(16,185,129,.10); border-color: rgba(16,185,129,.25); }
+    .conn.down{ background: rgba(244,63,94,.10); border-color: rgba(244,63,94,.25); }
     .online{
       margin-left:auto;
       padding:4px 10px;
@@ -114,7 +122,7 @@
     <aside class="sidebar">
       <div class="brand">
         <div class="logo" aria-hidden="true"></div>
-        <div class="title">工具選單</div><div class="online" id="onlineBadge" title="目前在線人數">—</div>
+        <div class="title">工具選單</div><div id="connStatus" class="conn">檢查中…</div><div class="online" id="onlineBadge" title="目前在線人數">—</div>
       </div>
 
       <div class="category">生活輔助</div>
@@ -303,6 +311,45 @@
     spawnLeaves('leaves-sidebar', 12);
     spawnLeaves('leaves-content', 18);
 
+    // --- 連線診斷 + 離線模式（CountAPI 被擋時） ---
+    const CONN = document.getElementById('connStatus');
+    let COUNTAPI_ONLINE = false;
+    async function testConnectivity(){
+      try{
+        // 嘗試取得 online key（最終會走到 create），若成功視為可用
+        await onlineEnsureKey();
+        COUNTAPI_ONLINE = true;
+        CONN.textContent = '連線：✅';
+        CONN.classList.remove('down'); CONN.classList.add('ok');
+      }catch(e){
+        COUNTAPI_ONLINE = false;
+        CONN.textContent = '連線：⛔';
+        CONN.classList.remove('ok'); CONN.classList.add('down');
+      }
+    }
+
+    // 離線估算（本機）：用於顯示不為 0 的大概值，僅此裝置有效
+    const LOCAL_PRESENCE_KEY = 'presence_local_tabs';
+    function localPresenceGet(){
+      return Math.max(1, Number(localStorage.getItem(LOCAL_PRESENCE_KEY) || 1)); // 至少 1
+    }
+    function localPresenceInc(){ localStorage.setItem(LOCAL_PRESENCE_KEY, String(localPresenceGet()+1)); }
+    function localPresenceDec(){ localStorage.setItem(LOCAL_PRESENCE_KEY, String(Math.max(0, localPresenceGet()-1))); }
+
+    function setOnlineBadgeOffline(){
+      ONLINE_BADGE.textContent = `${localPresenceGet()}(離線)`;
+    }
+
+    // sendBeacon 失敗時的 GET 圖片保底
+    function sendUpdateFallback(amount){
+      try{
+        const img = new Image();
+        // 使用第一個 endpoint 當保底
+        img.src = ENDPOINTS[0] + `/update/${ONLINE_NAMESPACE}/${ONLINE_KEY}?amount=${encodeURIComponent(amount)}&t=${Date.now()}`;
+      }catch(_){}
+    }
+
+
     // --- 在線人數（CountAPI 近似方案） ---
     const ONLINE_NAMESPACE = NAMESPACE; // 與點擊統一命名空間
     const ONLINE_KEY = 'online';
@@ -355,6 +402,16 @@
     }
 
     async function onlineJoin(){
+      await testConnectivity();
+      if(!COUNTAPI_ONLINE){
+        // 本機離線模式：顯示估算，不打 API
+        if(!sessionStorage.getItem(JOIN_FLAG)){
+          localPresenceInc();
+          sessionStorage.setItem(JOIN_FLAG, '1');
+        }
+        setOnlineBadgeOffline();
+        return;
+      }
       await onlineEnsureKey();
       if(!sessionStorage.getItem(JOIN_FLAG)){
         await onlineAdd(1);
@@ -365,6 +422,14 @@
     }
 
     async function onlineLeave(){
+      if(!COUNTAPI_ONLINE){
+        // 離線模式：本機-1
+        if(sessionStorage.getItem(JOIN_FLAG)){
+          localPresenceDec();
+          sessionStorage.removeItem(JOIN_FLAG);
+        }
+        return;
+      }
       if(sessionStorage.getItem(JOIN_FLAG)){
         await onlineAdd(-1);
         sessionStorage.removeItem(JOIN_FLAG);
@@ -372,15 +437,24 @@
     }
 
     // 初次加入與輪詢
+    testConnectivity();
     onlineJoin();
     const ONLINE_POLL = setInterval(async ()=>{
-      const n = await onlineGet();
-      setOnlineBadge(n);
+      if(COUNTAPI_ONLINE){
+        const n = await onlineGet();
+        setOnlineBadge(n);
+      }else{
+        setOnlineBadgeOffline();
+      }
     }, 10000);
 
     // 當分頁真正關閉或刷新時嘗試減一
     window.addEventListener('beforeunload', ()=>{
-      navigator.sendBeacon && navigator.sendBeacon(ENDPOINTS[0] + `/update/${ONLINE_NAMESPACE}/${ONLINE_KEY}?amount=${encodeURIComponent(-1)}`);
+      if(!COUNTAPI_ONLINE){
+        // 離線模式本機 -1
+        sessionStorage.getItem(JOIN_FLAG) && localPresenceDec();
+      }
+      if(navigator.sendBeacon){ navigator.sendBeacon(ENDPOINTS[0] + `/update/${ONLINE_NAMESPACE}/${ONLINE_KEY}?amount=${encodeURIComponent(-1)}`);} else { sendUpdateFallback(-1); }
       // 同時也清一次標記，避免刷新後未來不再 +1
       sessionStorage.removeItem(JOIN_FLAG);
     });
