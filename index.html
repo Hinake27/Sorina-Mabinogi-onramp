@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-Hant" class="no-js">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -166,6 +166,25 @@
   /* Remove click/online widgets if any known selectors appear */
   #clickCount, .click-count, #onlineUsers, .online-users { display:none !important; }
   /* ==== /Injected ==== */
+
+</style>
+<style>
+/* ==== Mobile UX patch (V5) ==== */
+@media (max-width: 780px){
+  .menu-toggle{
+    top: calc(env(safe-area-inset-top, 0) + 12px);
+    left: calc(env(safe-area-inset-left, 0) + 12px);
+    bottom: auto; /* move from bottom to top */
+    position: fixed;
+  }
+  /* If JS fails, keep sidebar visible (static) so使用者仍可操作 */
+  .no-js .sidebar{ position: static; transform: none; width: auto; max-width: none; }
+}
+/* Visually hint there's a drawer */
+@media (max-width: 780px){
+  .sidebar.open{ box-shadow: 8px 0 24px rgba(0,0,0,.15); }
+}
+/* ==== /V5 ==== */
 
 </style>
 </head>
@@ -516,6 +535,54 @@
   window.onlineEnsureKey = undefined;
 })();
 // ==== /Hard removal ====
+
+</script>
+<noscript><style>@media (max-width:780px){.sidebar{position:static;transform:none;width:auto;max-width:none;}}</style></noscript>
+<script>
+// ==== Mobile drawer UX (V5) ====
+(function(){
+  const sidebar = document.querySelector('.sidebar');
+  const toggleBtn = document.getElementById('menuToggle');
+  const backdrop = document.getElementById('backdrop');
+
+  if (!sidebar) return;
+
+  // First mobile visit -> auto open once
+  const isMobile = matchMedia('(max-width: 780px)').matches;
+  if (isMobile && !localStorage.getItem('drawer_seen_once')){
+    sidebar.classList.add('open');
+    backdrop && backdrop.classList.add('show');
+    localStorage.setItem('drawer_seen_once','1');
+  }
+
+  // Edge-swipe to open (simple gesture)
+  let startX = null, startY = null, tracking = false;
+  window.addEventListener('touchstart', (e)=>{
+    const t = e.touches[0];
+    startX = t.clientX; startY = t.clientY; tracking = (startX <= 18); // from left edge
+  }, {passive:true});
+
+  window.addEventListener('touchmove', (e)=>{
+    if(!tracking) return;
+    const t = e.touches[0];
+    const dx = t.clientX - startX;
+    const dy = Math.abs(t.clientY - startY);
+    if (dx > 30 && dy < 40){ // mostly horizontal right swipe
+      sidebar.classList.add('open');
+      backdrop && backdrop.classList.add('show');
+      tracking = false;
+    }
+  }, {passive:true});
+
+  // Ensure toggle is visible on top
+  if (toggleBtn){
+    toggleBtn.style.zIndex = '1000';
+  }
+
+  // Add a class to html for CSS no-js fallback to be disabled
+  document.documentElement.classList.remove('no-js');
+})();
+// ==== /V5 ====
 
 </script>
 </body>
